@@ -1,11 +1,12 @@
 import player
-import shape
 import cv2
 import numpy as np
 from PIL import ImageGrab
 import pywinctl as pwc
 import time
 import subprocess
+import pytesseract
+import easyocr
 
 class Game:
     
@@ -13,7 +14,32 @@ class Game:
         print("Game started")
         self.Player = player.Player("Les Hackathon")
         self.board = np.zeros((22, 12))
+        self.piece_id = 0
+    
+
+    def getPiece(self):
+        piece = np.zeros((3, 3))
+
+        # get type of piece
+        for i in range(3):
+            for j in range(3):
+                piece[i][j] = int(self.board[i][j + 4])
         
+        all_piece = {
+            "s": [[0,1,1],[1,1,0],[0,0,0]],
+            "z": [[1,1,0],[0,1,1],[0,0,0]],
+            "j": [[1,0,0],[1,1,1],[0,0,0]],
+            "l": [[0,0,1],[1,1,1],[0,0,0]],
+            "o": [[0,1,1],[0,1,1],[0,0,0]],
+            "i": [[1,1,1],[0,0,0],[0,0,0]],
+            "t": [[0,1,0],[1,1,1],[0,0,0]]
+        }
+        
+        for key, value in all_piece.items():
+            if (piece == value).all():
+                self.piece_id = key
+                
+        print(self.piece_id)
         
     def startNewGame(self):
         while True:
@@ -22,6 +48,7 @@ class Game:
             screen = np.array(screen)
             img = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)
             self.detectBoard(img)
+            self.getPiece()
             
     
     def detectBoard(self, img):
@@ -86,14 +113,25 @@ class Game:
                             self.board[n][n2] = 1
         
         
-        # show result
-        # cv2.imshow('Board Edge', virtual_board)
-        # cv2.imshow('Board Edge', self.img)
         print(self.board)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
         
-
+    def getNextState(self):
+        state = {}
+        
+        n_rot = 0
+        
+        if self.piece_id == "z" or self.piece_id == "s" or self.piece_id == "j":
+            n_rot = 2
+        elif self.piece_id == "i":
+            n_rot = 1
+        elif self.piece_id == "l":
+            n_rot = 3
+        else:
+            n_rot = 3
+        return state
+    
+        
     def getScore(self):
-        # get text with open cv
-        pass 
+        img_data = pytesseract.image_to_string(Image.fromarray(self.board))
+        
+        
