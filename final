@@ -1,0 +1,80 @@
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+import torch.nn.functional as F
+
+states_data = [
+    [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]]
+
+actions_data = [
+    [0],
+    [90],  # rotation, gauche, droite
+    [-1],
+    [1]  # rotation, gauche, droite 
+    
+]
+
+class TetrisDataset(Dataset):
+    def __init__(self, states, actions):
+        self.states = torch.tensor(states, dtype=torch.float32).view(-1, 23 * 12)  # Ajustement de la taille
+        self.actions = torch.tensor(actions, dtype=torch.float32)
+
+    def __len__(self):
+        return len(self.states)
+
+    def __getitem__(self, index):
+        return self.states[index], self.actions[index]
+    
+class Net(nn.Module):
+    def __init__(self, input, hidden, output):
+        super(Net, self).__init__()
+        self.layer1 = nn.Linear(input, hidden)
+        self.relu = nn.ReLU()
+        self.layer2 = nn.Linear(hidden, output)
+
+    def forward(self, x):
+        x = self.layer1(x)
+        x = self.relu(x)
+        x = self.layer2(x)
+
+        x = F.softmax(x, dim=1)
+
+        return x
+
+input_size = 23 * 12 
+output_size = 4
+hidden_size = 400
+
+#initialise de Net
+net = Net(input_size, hidden_size, output_size)
+
+alive = True
+
+while(alive):
+    #initialise le dataSet
+    #state a récup avec algo de récup screen
+    tetris_data = TetrisDataset(states=states_data, actions=actions_data)
+    batch_size = 1
+    dataloader = DataLoader(tetris_data, batch_size=batch_size, shuffle=True)
+    for i in range(10):
+        for batch in dataloader:
+            states_batch, actions_batch = batch
+
+            # Appliquez le modèle
+            output_batch = net(states_batch)
+
+            
+ 
