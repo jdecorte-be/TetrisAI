@@ -1,6 +1,3 @@
-"""
-@author: Viet Nguyen <nhviet1009@gmail.com>
-"""
 import argparse
 import os
 import shutil
@@ -14,7 +11,7 @@ import torch.nn as nn
 from pynput.keyboard import Key, Controller
 
 from tensorboardX import SummaryWriter
-from deepq import DeepQNetwork
+from deep_q_network import DeepQNetwork
 
 
 from game import Game
@@ -70,7 +67,7 @@ def train(opt):
 
     replay_memory = deque(maxlen=opt.replay_memory_size)
     epoch = 0
-    time.sleep(4)
+    time.sleep(1)
     keyboard.press('n')
     
     while epoch < opt.num_epochs:

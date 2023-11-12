@@ -5,13 +5,7 @@ from PIL import ImageGrab
 import pywinctl as pwc
 import time
 import subprocess
-# import pytesserac
 import torch
-# from selenium import webdriver
-# from selenium.common.exceptions import TimeoutException
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
-# from selenium.webdriver.common.by import By
 
 
 class Game:
@@ -48,8 +42,19 @@ class Game:
         for i in range(3):
             for j in range(3):
                 piece[i][j] = int(self.board[i][j + 4])
+        # print(piece)
         
         all_piece = {
+            "s": [[0,1,1],[1,1,0]],
+            "z": [[1,1,0],[0,1,1]],
+            "j": [[1,0,0],[1,1,1]],
+            "l": [[0,0,1],[1,1,1]],
+            "o": [[1,1],[1,1]],
+            "i": [[1,1,1,1]],
+            "t": [[0,1,0],[1,1,1]]
+        }
+        
+        detect_piece = {
             "s": [[0,1,1],[1,1,0],[0,0,0]],
             "z": [[1,1,0],[0,1,1],[0,0,0]],
             "j": [[1,0,0],[1,1,1],[0,0,0]],
@@ -59,10 +64,10 @@ class Game:
             "t": [[0,1,0],[1,1,1],[0,0,0]]
         }
         
-        for key, value in all_piece.items():
+        for key, value in detect_piece.items():
             if (piece == value).all():
                 self.piece_id = key
-                self.piece = value
+                self.piece = all_piece[key]
         
         # replace 2 upper line of matrix with 0
         for i in range(12):
@@ -90,9 +95,9 @@ class Game:
         (board_x, board_y, board_w, board_h) = cv2.boundingRect(board_contour)
         
         # create cells
-        board_w -= 397
-        board_x += 397
-        board_y += 5
+        board_w -= 535
+        board_x += 535
+        board_y += 7
         
         block_width = int(board_w / 12)
         block_height = int(board_h / 22)
@@ -100,13 +105,13 @@ class Game:
         
         # detect pieces
         tetro = {
-            "j": [248, 155, 99],
-            "l": [87, 197, 84],
-            "o": [153, 153, 153],
-            "i": [27, 55, 237],
-            "s": [53,180,241],
-            "t": [194, 82, 197],
-            "z": [33, 116, 238]
+            "j": [249, 154, 45],
+            "l": [70, 188, 49],
+            "o": [142, 142, 142],
+            "i": [0, 0, 255],
+            "s": [26,163,255],
+            "t": [189, 74, 197],
+            "z": [0, 91, 255] 
         }
         
         for key in tetro:
@@ -118,8 +123,8 @@ class Game:
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             for cnt in contours:
                 (x, y, w, h) = cv2.boundingRect(cnt)
-                cv2.rectangle(virtual_board, (x, y), (x + w, y + h), (100, 0, 0), 2)
-                cv2.rectangle(img, (x, y), (x + w, y + h), (100, 0, 0), 2)
+                # cv2.rectangle(virtual_board, (x, y), (x + w, y + h), (100, 100, 0), 2)
+                cv2.rectangle(img, (x, y), (x + w, y + h), (100, 100, 0), 2)
 
                 for n in range(22):
                     for n2 in range(12):
@@ -130,11 +135,17 @@ class Game:
                         # cv2.rectangle(virtual_board, (block_x + board_x, block_y + board_y), (block_x + block_width + board_x, block_y + block_height + board_y), (0, 0, 0), 1)
                         cv2.rectangle(img, (block_x + board_x, block_y + board_y), (block_x + block_width + board_x, block_y + block_height + board_y), (0, 0, 0), 1)
                         
-                        if board_x + block_x < x < board_x + block_x + block_width and board_y + block_y < y < board_y + block_y + block_height:
+                        if board_x + block_x <= x < board_x + block_x + block_width and board_y + block_y <= y < board_y + block_y + block_height:
                             self.board[n][n2] = 1
         
         
-        print(self.board)
+        
+        # print(self.board)
+        # cv2.imshow("img", img)
+        # cv2.imshow("virtual_board", virtual_board)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+        # exit(0)
         
     def check_collision(self, piece, pos):
         future_y = pos["y"] + 1
@@ -153,28 +164,16 @@ class Game:
                         board[pos["y"] + y][pos["x"] + x] = 1
             return board
         def getMaxLenOfForm(form):
-            max_size = 0
-            for i in range(3):
-                count = 0
-                for j in range(3):
-                    if(form[i][j] == 1):
-                        count+=1
-                max_size = max(max_size, count)
-            return max_size
+            return form.shape[1]
             
-        n_rot = 4
-        if(self.piece_id == "i"):
-            n_rot = 1
-        elif(self.piece_id == "s" or self.piece_id == "z"):
-            n_rot = 2
-        
+   
         states = {}
         board = np.array(self.board)
         curr_piece = np.array(self.piece)
-        for i in range(n_rot):
+        for i in range(4):
             # size of piece
             valid_xs = 12 - getMaxLenOfForm(curr_piece)
-            for x in range(valid_xs):
+            for x in range(valid_xs + 1):
                 pos = {"x": x, "y": 0}
                 while not self.check_collision(curr_piece, pos):
                     pos["y"] += 1
@@ -182,32 +181,38 @@ class Game:
                 states[(x, i)] = self.getStateProp(board)
                 print(board)
             curr_piece = np.rot90(curr_piece, 1)
-        exit(0)
+        # exit(0)
         return states
     
     def getHoles(self, board):
-        
         num_holes = 0
         for col in zip(*board):
-            row = 2
+            row = 0
             while row < 22 and col[row] == 0:
                 row += 1
-            num_holes += len([x for x in col[row + 1:] if x == 0])
-        print("holes: ",num_holes)
+            count = 0
+            while row < 22:
+                if(col[row] == 0):
+                    count += 1
+                row += 1
+            num_holes += count
         return num_holes
+        
 
     def getBumpAndHeight(self):
         board = np.array(self.board)
+        # exit(0)
         mask = board != 0
         invert_heights = np.where(mask.any(axis=0), np.argmax(mask, axis=0), 22)
         h = 22 - invert_heights
         total_height = np.sum(h)
+        print(board, total_height)
         currs = h[:-1]
         next = h[1:]
         diff = np.abs(currs - next)
         bumpiness = np.sum(diff)
-        print("bumpiness: ",bumpiness)
-        print("height: ",total_height)
+        # print("bumpiness: ",bumpiness)
+        # print("height: ",total_height)
         return bumpiness, total_height
     
     def getStateProp(self, board):
@@ -221,7 +226,7 @@ class Game:
         bump, height = self.getBumpAndHeight()
         holes = self.getHoles(board)
         full_line = nbrOfFullLines(board)
-        
+        print(full_line, holes, bump, height)
         return torch.FloatTensor([full_line, holes, bump, height])
     
     def checkGameOver(self):
@@ -254,15 +259,13 @@ class Game:
             self.Player.up()
             self.piece = np.rot90(self.piece)
             
-        while f_pos != pos["x"]:
-            if pos["x"] < f_pos:
-                self.Player.right()
-                pos["x"] += 1
-            else:
-                self.Player.left()
-                pos["x"] -= 1
-        
-        for _ in range(12):
+        for _ in range(5):
+            self.Player.left()
+        for _ in range(f_pos):
+            self.Player.right()
+
+    
+        for _ in range(22):
             self.Player.down()
         
         while not self.check_collision(self.piece, pos):
@@ -278,7 +281,7 @@ class Game:
         self.tetrominoes += 1
         
         if(self.checkGameOver()):
-            self.score -= 2
+            self.score -= 20
             self.gameover = True
         
         return self.score, self.gameover
