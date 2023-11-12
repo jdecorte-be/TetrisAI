@@ -131,7 +131,6 @@ class Game:
                         block_x = n2 * block_width
                         block_y = n * block_height
 
-
                         # cv2.rectangle(virtual_board, (block_x + board_x, block_y + board_y), (block_x + block_width + board_x, block_y + block_height + board_y), (0, 0, 0), 1)
                         cv2.rectangle(img, (block_x + board_x, block_y + board_y), (block_x + block_width + board_x, block_y + block_height + board_y), (0, 0, 0), 1)
                         
@@ -139,13 +138,6 @@ class Game:
                             self.board[n][n2] = 1
         
         
-        
-        # print(self.board)
-        # cv2.imshow("img", img)
-        # cv2.imshow("virtual_board", virtual_board)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-        # exit(0)
         
     def check_collision(self, piece, pos):
         future_y = pos["y"] + 1
@@ -170,7 +162,10 @@ class Game:
         states = {}
         board = np.array(self.board)
         curr_piece = np.array(self.piece)
-        for i in range(4):
+        n_rot = 4
+        if(self.piece_id == 'i'):
+            n_rot = 2
+        for i in range(n_rot):
             # size of piece
             valid_xs = 12 - getMaxLenOfForm(curr_piece)
             for x in range(valid_xs + 1):
@@ -179,9 +174,7 @@ class Game:
                     pos["y"] += 1
                 board = putOnMatrix(curr_piece, {"x": pos["x"], "y": pos["y"]})
                 states[(x, i)] = self.getStateProp(board)
-                print(board)
             curr_piece = np.rot90(curr_piece, 1)
-        # exit(0)
         return states
     
     def getHoles(self, board):
@@ -206,7 +199,7 @@ class Game:
         invert_heights = np.where(mask.any(axis=0), np.argmax(mask, axis=0), 22)
         h = 22 - invert_heights
         total_height = np.sum(h)
-        print(board, total_height)
+        # print(board, total_height)
         currs = h[:-1]
         next = h[1:]
         diff = np.abs(currs - next)
@@ -227,7 +220,7 @@ class Game:
         holes = self.getHoles(board)
         full_line = nbrOfFullLines(board)
         print(full_line, holes, bump, height)
-        return torch.FloatTensor([full_line, holes, bump, height])
+        return torch.FloatTensor([full_line , holes, bump, height])
     
     def checkGameOver(self):
         template = cv2.imread("lose.png")
@@ -272,7 +265,6 @@ class Game:
             pos["y"] += 1
         
         board = putOnMatrix(self.piece, {"x": pos["x"], "y": pos["y"]})
-        # print(board)
         
         full_lines = nbrOfFullLines(board)
         

@@ -67,7 +67,9 @@ def test(opt):
         if done:
             break
         
-
+    keyboard.press("A")
+    keyboard.press("9")
+    keyboard.press(Key.enter)
 
 if __name__ == "__main__":
     opt = get_args()
