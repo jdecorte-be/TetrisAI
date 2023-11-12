@@ -10,6 +10,7 @@ import pytesseract
 class Game:
     
     def __init__(self):
+        time.sleep(5)
         print("Game started")
         self.Player = player.Player("Les Hackathon")
         self.board = np.zeros((22, 12))
@@ -142,10 +143,11 @@ class Game:
         
     # def getHoles(self):
     #     num_holes = 0
-    #     for col in zip(*(self.board)):
-    #         row = 22
-    #         while row >0 and col[row] == :
-    #             row -= 1
-    #         num_holes += len([i for i in col[row + 1:] if i == 0])
+    #     hei = 22
+    #     while hei > 0:
+    #         for i in range(12):
+    #             if self.board[hei][i] == 0:
+    #                 num_holes += 1
+                
+    #         hei -= 1
     #     print("holes: ",num_holes)
-    #     return num_holes
