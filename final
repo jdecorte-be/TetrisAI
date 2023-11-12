@@ -4,32 +4,35 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
+#exemple de ce a quoi ça doit ressembler la matrce
 states_data = [
     [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]]
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ]]]
 
 actions_data = [
     [0],
     [90],  # rotation, gauche, droite
     [-1],
-    [1]  # rotation, gauche, droite 
+    [1],  # rotation, gauche, droite
+    [32] 
     
 ]
 
 class TetrisDataset(Dataset):
     def __init__(self, states, actions):
-        self.states = torch.tensor(states, dtype=torch.float32).view(-1, 23 * 12)  # Ajustement de la taille
+        # Supprimez la dernière colonne des états pour ajuster la taille à 22*12
+        self.states = torch.tensor(states, dtype=torch.float32).view(-1, 22 * 12)
         self.actions = torch.tensor(actions, dtype=torch.float32)
 
     def __len__(self):
@@ -37,6 +40,7 @@ class TetrisDataset(Dataset):
 
     def __getitem__(self, index):
         return self.states[index], self.actions[index]
+
     
 class Net(nn.Module):
     def __init__(self, input, hidden, output):
@@ -54,9 +58,10 @@ class Net(nn.Module):
 
         return x
 
-input_size = 23 * 12 
-output_size = 4
+input_size = 22 * 12 
+output_size = 5
 hidden_size = 400
+batch_size = 1
 
 #initialise de Net
 net = Net(input_size, hidden_size, output_size)
@@ -64,17 +69,23 @@ net = Net(input_size, hidden_size, output_size)
 alive = True
 
 while(alive):
-    #initialise le dataSet
-    #state a récup avec algo de récup screen
-    tetris_data = TetrisDataset(states=states_data, actions=actions_data)
-    batch_size = 1
-    dataloader = DataLoader(tetris_data, batch_size=batch_size, shuffle=True)
+    
     for i in range(10):
+        #initialise le dataSet
+        #state a récup avec algo de récup screen
+        tetris_data = TetrisDataset(states=states_data, actions=actions_data)
+        dataloader = DataLoader(tetris_data, batch_size=batch_size, shuffle=True)
+
         for batch in dataloader:
             states_batch, actions_batch = batch
 
-            # Appliquez le modèle
+            # Appliquez le modèle avec les data (équivalent a faire forward())
+            #output_batch nous donne comme résultat les probabilité de clicker sur les différents event
             output_batch = net(states_batch)
+
+
+        
+
 
             
  
