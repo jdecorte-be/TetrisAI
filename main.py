@@ -7,8 +7,17 @@ import torch.nn as nn
 import torch.optim as optim
 import random
 from collections import deque
+from PIL import ImageGrab
 
 
-gam = Game()
+g = Game()
 
-gam.startNewGame()
+# gam.startNewGame()
+# while True:
+screen = ImageGrab.grab()
+screen = np.array(screen)
+
+img = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)
+g.detectBoard(img)
+g.getPiece()
+g.getNextState()

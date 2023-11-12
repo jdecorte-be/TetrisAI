@@ -73,34 +73,50 @@ net = Net(input_size, hidden_size, output_size)
 
 alive = True
 
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(123)
+else:
+    torch.manual_seed(123)
+
+if torch.cuda.is_available():
+    model = torch.load("{}/tetris".format("model"))
+else:
+    model = torch.load("{}/tetris".format("model"), map_location=lambda storage, loc: storage)
+
+model.eval()
+
+if(torch.cuda.is_available()):
+    model.cuda()
+
 while(alive):
     g = Game()
     
-    for i in range(1):
-        screen = ImageGrab.grab()
-        screen = np.array(screen)
-        img = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)
-        g.detectBoard(img)
-        #initialise le dataSet
-        #state a récup avec algo de récup screen
-        tetris_data = TetrisDataset(states=g.board, actions=actions_data)
-        dataloader = DataLoader(tetris_data, batch_size=batch_size, shuffle=True)
+    screen = ImageGrab.grab()
+    screen = np.array(screen)
+    img = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)
+    g.detectBoard(img)
+    #initialise le dataSet
+    #state a récup avec algo de récup screen
+    tetris_data = TetrisDataset(states=g.board, actions=actions_data)
+    dataloader = DataLoader(tetris_data, batch_size=batch_size, shuffle=True)
 
-        for batch in dataloader:
-            states_batch, actions_batch = batch
+    torch().start()
 
-            # Appliquez le modèle avec les data (équivalent a faire forward())
-            #output_batch nous donne comme résultat les probabilité de clicker sur les différents event
-            output_batch = net(states_batch)
-            key = output_batch.argmax().item()
-            
-            if key == 1:
-                g.Player.up()
-            if key == 2:
-                g.Player.left()
-            if key == 3:
-                g.Player.right()
-            if key == 4:
-                g.Player.space()
-            # print(key.item())
+    # for batch in dataloader:
+        # states_batch, actions_batch = batch
+
+        # # Appliquez le modèle avec les data (équivalent a faire forward())
+        # #output_batch nous donne comme résultat les probabilité de clicker sur les différents event
+        # output_batch = model(states_batch)
+        # key = output_batch.argmax().item()
+        
+        # if key == 1:
+        #     g.Player.up()
+        # if key == 2:
+        #     g.Player.left()
+        # if key == 3:
+        #     g.Player.right()
+        # if key == 4:
+        #     g.Player.space()
+        #     # print(key.item())
 
