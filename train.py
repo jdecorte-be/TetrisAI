@@ -7,16 +7,20 @@ import shutil
 from random import random, randint, sample
 import cv2
 from PIL import ImageGrab
-
+import time
 import numpy as np
 import torch
 import torch.nn as nn
+from pynput.keyboard import Key, Controller
+
 from tensorboardX import SummaryWriter
 from deepq import DeepQNetwork
 
 
 from game import Game
 from collections import deque
+
+keyboard = Controller()
 
 
 def get_args():
@@ -51,27 +55,32 @@ def train(opt):
         shutil.rmtree(opt.log_path)
     os.makedirs(opt.log_path)
     writer = SummaryWriter(opt.log_path)
+    
     env = Game()
+    
     model = DeepQNetwork()
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
     criterion = nn.MSELoss()
 
     state = env.reset()
+
     if torch.cuda.is_available():
         model.cuda()
         state = state.cuda()
 
     replay_memory = deque(maxlen=opt.replay_memory_size)
     epoch = 0
+    time.sleep(4)
+    keyboard.press('n')
+    
     while epoch < opt.num_epochs:
-        
         screen = ImageGrab.grab()
         screen = np.array(screen)
         img = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)
         env.detectBoard(img)
+        env.getPiece()
         
-        
-        next_steps = env.getNextStates()
+        next_steps = env.getNextState()
         # Exploration or exploitation
         epsilon = opt.final_epsilon + (max(opt.num_decay_epochs - epoch, 0) * (
                 opt.initial_epsilon - opt.final_epsilon) / opt.num_decay_epochs)
@@ -93,7 +102,8 @@ def train(opt):
         next_state = next_states[index, :]
         action = next_actions[index]
 
-        reward, done = env.step(action, render=True)
+        print(action)
+        reward, done = env.step(action)
 
         if torch.cuda.is_available():
             next_state = next_state.cuda()
@@ -102,7 +112,14 @@ def train(opt):
             final_score = env.score
             final_tetrominoes = env.tetrominoes
             final_cleared_lines = env.cleared_lines
+        
             state = env.reset()
+            keyboard.press(Key.enter)
+            time.sleep(1)
+            keyboard.press('n')
+            time.sleep(1)
+            keyboard.press(Key.enter)
+
             if torch.cuda.is_available():
                 state = state.cuda()
         else:

@@ -17,5 +17,8 @@ class Player:
         
     def space(self):
         self.keyboard.press(Key.space)
+        
+    def down(self):
+        self.keyboard.press(Key.down)
 
     

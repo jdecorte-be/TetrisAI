@@ -14,12 +14,9 @@ import torch
 # from selenium.webdriver.common.by import By
 
 
-# driver = webdriver.Chrome()
-# driver.get(driver.current_url)
 class Game:
     
     def __init__(self):
-        # time.sleep(5)
         print("Game started")
         self.Player = player.Player("Les Hackathon")
         self.board = np.zeros((22, 12))
@@ -27,20 +24,23 @@ class Game:
         self.piece = [[0,0,0],[0,0,0],[0,0,0]]
         self.score = 0
         self.holes = 0
+        self.gameover = False
+        self.img = 0
+        self.tetrominoes = 0
+        self.cleared_lines = 0
     
     def reset(self):
         self.board = np.zeros((22, 12))
         self.piece_id = 0
         self.score = 0
+        self.holes = 0
+        self.gameover = False
+        self.tetrominoes = 0
+        self.cleared_lines = 0
+        self.piece = [[0,0,0],[0,0,0],[0,0,0]]
+        self.img = 0
         
-    def game_over(self):
         
-        try:
-            alert = WebDriverWait(driver, 10).until(EC.alert_is_present())
-            return True
-        except TimeoutException:
-            return False
-
     def getPiece(self):
         piece = np.zeros((3, 3))
 
@@ -69,9 +69,9 @@ class Game:
             self.board[0][i] = 0
         for i in range(12):
             self.board[1][i] = 0
-        
             
     def detectBoard(self, img):
+        self.img = img
         self.board = np.zeros((22, 12))
         rows, cols, _ = img.shape
         virtual_board = np.zeros((rows, cols, 3), dtype=np.uint8)
@@ -136,17 +136,13 @@ class Game:
         
         print(self.board)
         
-        
-
     def check_collision(self, piece, pos):
         future_y = pos["y"] + 1
         for y in range(len(piece)):
             for x in range(len(piece[y])):
-                if future_y + y > 22 - 1 or self.board[future_y + y][pos["x"] + x] and piece[y][x]:
+                if future_y + y > 21 or self.board[future_y + y][pos["x"] + x] and piece[y][x]:
                     return True
         return False
-
-
 
     def getNextState(self):
         def putOnMatrix(piece, pos):
@@ -166,10 +162,16 @@ class Game:
                 max_size = max(max_size, count)
             return max_size
             
+        n_rot = 4
+        if(self.piece_id == "i"):
+            n_rot = 1
+        elif(self.piece_id == "s" or self.piece_id == "z"):
+            n_rot = 2
+        
         states = {}
         board = np.array(self.board)
         curr_piece = np.array(self.piece)
-        for i in range(4):
+        for i in range(n_rot):
             # size of piece
             valid_xs = 12 - getMaxLenOfForm(curr_piece)
             for x in range(valid_xs):
@@ -178,18 +180,11 @@ class Game:
                     pos["y"] += 1
                 board = putOnMatrix(curr_piece, {"x": pos["x"], "y": pos["y"]})
                 states[(x, i)] = self.getStateProp(board)
-                # print(states)
+                print(board)
             curr_piece = np.rot90(curr_piece, 1)
+        exit(0)
         return states
     
-    def getScore(self, img):
-        img_data = pytesseract.image_to_string(img, config='--oem 3 --psm 11 -c tessedit_char_whitelist=0123456789')
-        img_lines = list(img_data.split("\n"))
-        img_lines = [line for line in img_lines if line.strip()]  # Remove empty lines
-        if(len(img_lines) > 5):
-            self.score = int(img_lines[5])
-        print("score: ",self.score)
-        
     def getHoles(self, board):
         
         num_holes = 0
@@ -216,19 +211,77 @@ class Game:
         return bumpiness, total_height
     
     def getStateProp(self, board):
+        def nbrOfFullLines(board):
+            lines = 0
+            for i in range(22):
+                if np.all(board[i] == 1):
+                    lines += 1
+            return lines
+        
         bump, height = self.getBumpAndHeight()
         holes = self.getHoles(board)
-        return torch.FloatTensor([0, holes, bump, height])
+        full_line = nbrOfFullLines(board)
+        
+        return torch.FloatTensor([full_line, holes, bump, height])
+    
+    def checkGameOver(self):
+        template = cv2.imread("lose.png")
+        res = cv2.matchTemplate(self.img, template, cv2.TM_CCOEFF_NORMED)
+        if np.max(res) > 0.9:
+            print("Game Over")
+            return True
+        else:
+            return False
     
     def step(self, action):
-        mov, rot = action
-        if(mov == LEFT):
-            self.Player.left()
-        elif(mov == RIGHT):
-            self.Player.right()
+        def putOnMatrix(piece, pos):
+            board = np.array(self.board)
+            for y in range(len(piece)):
+                for x in range(len(piece[y])):
+                    if piece[y][x]:
+                        board[pos["y"] + y][pos["x"] + x] = 1
+            return board
+        
+        def nbrOfFullLines(board):
+            lines = 0
+            for i in range(22):
+                if np.all(board[i] == 1):
+                    lines += 1
+            return lines
+        f_pos, rot = action
+        pos = {"x": 6, "y": 0}
         for _ in range(rot):
             self.Player.up()
+            self.piece = np.rot90(self.piece)
+            
+        while f_pos != pos["x"]:
+            if pos["x"] < f_pos:
+                self.Player.right()
+                pos["x"] += 1
+            else:
+                self.Player.left()
+                pos["x"] -= 1
         
-    
+        for _ in range(12):
+            self.Player.down()
+        
+        while not self.check_collision(self.piece, pos):
+            pos["y"] += 1
+        
+        board = putOnMatrix(self.piece, {"x": pos["x"], "y": pos["y"]})
+        # print(board)
+        
+        full_lines = nbrOfFullLines(board)
+        
+        self.score += (1 + (full_lines ** 2) * 12)
+        self.cleared_lines += full_lines
+        self.tetrominoes += 1
+        
+        if(self.checkGameOver()):
+            self.score -= 2
+            self.gameover = True
+        
+        return self.score, self.gameover
+
         
         
