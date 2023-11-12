@@ -6,7 +6,6 @@ import pywinctl as pwc
 import time
 import subprocess
 import pytesseract
-import easyocr
 
 class Game:
     
@@ -15,6 +14,7 @@ class Game:
         self.Player = player.Player("Les Hackathon")
         self.board = np.zeros((22, 12))
         self.piece_id = 0
+        self.score = 0
     
 
     def getPiece(self):
@@ -31,7 +31,7 @@ class Game:
             "j": [[1,0,0],[1,1,1],[0,0,0]],
             "l": [[0,0,1],[1,1,1],[0,0,0]],
             "o": [[0,1,1],[0,1,1],[0,0,0]],
-            "i": [[1,1,1],[0,0,0],[0,0,0]],
+            "i": [[0,0,0],[1,1,1],[0,0,0]],
             "t": [[0,1,0],[1,1,1],[0,0,0]]
         }
         
@@ -49,8 +49,9 @@ class Game:
             img = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)
             self.detectBoard(img)
             self.getPiece()
+            self.getScore(img)
+            self.getHoles()
             
-    
     def detectBoard(self, img):
         rows, cols, _ = img.shape
         virtual_board = np.zeros((rows, cols, 3), dtype=np.uint8)
@@ -130,8 +131,21 @@ class Game:
             n_rot = 3
         return state
     
+    def getScore(self, img):
+        img_data = pytesseract.image_to_string(img, config='--oem 3 --psm 11 -c tessedit_char_whitelist=0123456789')
+        img_lines = list(img_data.split("\n"))
+        img_lines = [line for line in img_lines if line.strip()]  # Remove empty lines
+        if(len(img_lines) > 5):
+            self.score = int(img_lines[5])
+        print("score: ",self.score)
         
-    def getScore(self):
-        img_data = pytesseract.image_to_string(Image.fromarray(self.board))
         
-        
+    # def getHoles(self):
+    #     num_holes = 0
+    #     for col in zip(*(self.board)):
+    #         row = 22
+    #         while row >0 and col[row] == :
+    #             row -= 1
+    #         num_holes += len([i for i in col[row + 1:] if i == 0])
+    #     print("holes: ",num_holes)
+    #     return num_holes
