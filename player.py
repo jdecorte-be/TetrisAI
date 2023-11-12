@@ -1,3 +1,4 @@
+import time
 from pynput.keyboard import Key, Controller
 
 class Player:
@@ -18,4 +19,9 @@ class Player:
     def space(self):
         self.keyboard.press(Key.space)
 
-    
+    def newgame(self):
+        self.keyboard.press(Key.enter)
+        time.sleep(0.5)
+        self.keyboard.press('n')
+        time.sleep(0.5)
+        self.keyboard.press(Key.enter)
