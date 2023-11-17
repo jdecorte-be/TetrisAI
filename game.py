@@ -45,13 +45,25 @@ class Game:
         # print(piece)
         
         all_piece = {
-            "s": [[0,1,1],[1,1,0]],
-            "z": [[1,1,0],[0,1,1]],
-            "j": [[1,0,0],[1,1,1]],
-            "l": [[0,0,1],[1,1,1]],
-            "o": [[1,1],[1,1]],
+            "s": [[0,1,1],
+                  [1,1,0]],
+
+            "z": [[1,1,0],
+                  [0,1,1]],
+
+            "j": [[1,0,0],
+                  [1,1,1]],
+
+            "l": [[0,0,1],
+                  [1,1,1]],
+
+            "o": [[1,1],
+                  [1,1]],
+            
             "i": [[1,1,1,1]],
-            "t": [[0,1,0],[1,1,1]]
+
+            "t": [[0,1,0],
+                  [1,1,1]]
         }
         
         detect_piece = {
@@ -156,6 +168,7 @@ class Game:
                         board[pos["y"] + y][pos["x"] + x] = 1
             return board
         def getMaxLenOfForm(form):
+            print(form.shape[1])
             return form.shape[1]
             
    
@@ -163,8 +176,7 @@ class Game:
         board = np.array(self.board)
         curr_piece = np.array(self.piece)
         n_rot = 4
-        if(self.piece_id == 'i'):
-            n_rot = 2
+        
         for i in range(n_rot):
             # size of piece
             valid_xs = 12 - getMaxLenOfForm(curr_piece)
@@ -220,7 +232,7 @@ class Game:
         holes = self.getHoles(board)
         full_line = nbrOfFullLines(board)
         print(full_line, holes, bump, height)
-        return torch.FloatTensor([full_line , holes, bump, height])
+        return torch.FloatTensor([full_line * 3, holes, bump * 2, height * 2])
     
     def checkGameOver(self):
         template = cv2.imread("lose.png")
@@ -232,6 +244,8 @@ class Game:
             return False
     
     def step(self, action):
+        def getMaxLenOfForm(form):
+            return form.shape[1]
         def putOnMatrix(piece, pos):
             board = np.array(self.board)
             for y in range(len(piece)):
@@ -241,31 +255,35 @@ class Game:
             return board
         
         def nbrOfFullLines(board):
+            
             lines = 0
             for i in range(22):
                 if np.all(board[i] == 1):
                     lines += 1
             return lines
+        
+        
         f_pos, rot = action
         pos = {"x": 6, "y": 0}
+        
         for _ in range(rot):
             self.Player.up()
             self.piece = np.rot90(self.piece)
-            
-        for _ in range(5):
+
+        
+        for _ in range(6):
             self.Player.left()
         for _ in range(f_pos):
             self.Player.right()
-
-    
+            
         for _ in range(22):
             self.Player.down()
-        
+
+        # self.Player.space()
+
         while not self.check_collision(self.piece, pos):
             pos["y"] += 1
-        
         board = putOnMatrix(self.piece, {"x": pos["x"], "y": pos["y"]})
-        
         full_lines = nbrOfFullLines(board)
         
         self.score += (1 + (full_lines ** 2) * 12)

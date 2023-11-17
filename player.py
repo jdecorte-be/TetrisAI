@@ -1,4 +1,5 @@
 from pynput.keyboard import Key, Controller
+import time
 
 class Player:
     def __init__(self, name):
@@ -8,6 +9,7 @@ class Player:
 
     def left(self):
         self.keyboard.press(Key.left)
+        
     
     def right(self):
         self.keyboard.press(Key.right)

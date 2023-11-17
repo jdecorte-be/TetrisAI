@@ -11,7 +11,8 @@ import torch.nn as nn
 from pynput.keyboard import Key, Controller
 
 from tensorboardX import SummaryWriter
-from deep_q_network import DeepQNetwork
+
+from src.deep_q_network import DeepQNetwork
 
 
 from game import Game
