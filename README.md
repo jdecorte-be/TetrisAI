@@ -39,6 +39,8 @@ For testing the AI's performance, execute:
 python3 test.py
 ```
 
+The AI only work on ```https://web.itu.edu.tr/~msilgu/tetris/tetris.html``` at 200% zoom.
+
 ### The Objective of Tetris AI
 
 The primary goal of Tetris AI is not just to play Tetris but to excel at it. This involves mastering the game mechanics and employing strategies to maximize the score while minimizing the risk of losing.
