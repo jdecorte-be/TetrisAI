@@ -1,10 +1,10 @@
 
 <h1 align="center">
-    📖 Tetris AI: The Art of Perfect Play
+    📖 Tetris AI
 </h1>
 
 <p align="center">
-    <b><i>Mastering the Classic Game with Advanced AI</i></b><br>
+    <b><i>The (Near) Perfect Player</i></b><br>
 </p>
 
 <p align="center">
